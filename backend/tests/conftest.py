@@ -89,3 +89,15 @@ async def test_users(db_session: AsyncSession) -> dict[str, User]:
         
     await db_session.flush()  # Push users to DB to get IDs
     return users
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clean_database(db_session: AsyncSession):
+    """Ensure database tables are cleared after each test run to isolate state."""
+    yield
+    from sqlalchemy import text
+    await db_session.execute(text("DELETE FROM drivers;"))
+    await db_session.execute(text("DELETE FROM vehicles;"))
+    await db_session.execute(text("DELETE FROM users;"))
+    await db_session.commit()
+

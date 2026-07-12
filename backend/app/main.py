@@ -3,9 +3,12 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 
 from app.core.config import settings
 from app.api.auth import router as auth_router
+from app.api.vehicles import router as vehicles_router
+from app.api.drivers import router as drivers_router
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +21,8 @@ app = FastAPI(
 
 # Include API Routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
+app.include_router(vehicles_router, prefix=f"{settings.API_V1_STR}/vehicles", tags=["vehicles"])
+app.include_router(drivers_router, prefix=f"{settings.API_V1_STR}/drivers", tags=["drivers"])
 
 # CORS middleware configuration
 if settings.BACKEND_CORS_ORIGINS:
@@ -36,10 +41,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.warning(f"Validation error for path {request.url.path}: {exc.errors()}")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
+        content=jsonable_encoder({
             "detail": exc.errors(),
             "message": "Input validation failed. Please check your request fields."
-        },
+        }),
     )
 
 
