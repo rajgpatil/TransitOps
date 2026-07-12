@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, get_current_user
 from app.core.permissions import ModuleEnum, ActionEnum
 from app.models.user import User
-from app.schemas.expense import ExpenseCreate, ExpenseResponse
+from app.schemas.fuel_log import FuelLogCreate, FuelLogResponse
 from app.services.finance import FinanceService
 
 router = APIRouter()
@@ -14,29 +14,29 @@ router = APIRouter()
 
 @router.post(
     "",
-    response_model=ExpenseResponse,
+    response_model=FuelLogResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_permission(ModuleEnum.expenses, ActionEnum.create))]
 )
-async def create_expense(
-    obj_in: ExpenseCreate,
+async def create_fuel_log(
+    obj_in: FuelLogCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new expense entry. Financial Analyst, Fleet Manager, and Driver can create."""
-    return await FinanceService.create_expense(db, obj_in=obj_in, created_by=current_user.id)
+    """Create a new fuel log. Driver, Fleet Manager, and Financial Analyst can create."""
+    return await FinanceService.create_fuel_log(db, obj_in=obj_in, created_by=current_user.id)
 
 
 @router.get(
     "",
-    response_model=List[ExpenseResponse],
+    response_model=List[FuelLogResponse],
     dependencies=[Depends(require_permission(ModuleEnum.expenses, ActionEnum.read))]
 )
-async def list_expenses(
+async def list_fuel_logs(
     skip: int = 0,
     limit: int = 100,
     vehicle_id: Optional[int] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """List expenses. All authenticated roles can view."""
-    return await FinanceService.get_expenses(db, skip=skip, limit=limit, vehicle_id=vehicle_id)
+    """List fuel logs. All authenticated roles can view."""
+    return await FinanceService.get_fuel_logs(db, skip=skip, limit=limit, vehicle_id=vehicle_id)

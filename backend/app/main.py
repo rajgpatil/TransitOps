@@ -9,6 +9,10 @@ from app.core.config import settings
 from app.api.auth import router as auth_router
 from app.api.vehicles import router as vehicles_router
 from app.api.drivers import router as drivers_router
+from app.api.trips import router as trips_router
+from app.api.maintenance import router as maintenance_router
+from app.api.fuel_logs import router as fuel_logs_router
+from app.api.expenses import router as expenses_router
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +27,10 @@ app = FastAPI(
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(vehicles_router, prefix=f"{settings.API_V1_STR}/vehicles", tags=["vehicles"])
 app.include_router(drivers_router, prefix=f"{settings.API_V1_STR}/drivers", tags=["drivers"])
+app.include_router(trips_router, prefix=f"{settings.API_V1_STR}/trips", tags=["trips"])
+app.include_router(maintenance_router, prefix=f"{settings.API_V1_STR}/maintenance", tags=["maintenance"])
+app.include_router(fuel_logs_router, prefix=f"{settings.API_V1_STR}/fuel-logs", tags=["fuel-logs"])
+app.include_router(expenses_router, prefix=f"{settings.API_V1_STR}/expenses", tags=["expenses"])
 
 # CORS middleware configuration
 if settings.BACKEND_CORS_ORIGINS:

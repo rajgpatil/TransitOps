@@ -96,6 +96,10 @@ async def clean_database(db_session: AsyncSession):
     """Ensure database tables are cleared after each test run to isolate state."""
     yield
     from sqlalchemy import text
+    await db_session.execute(text("DELETE FROM expenses;"))
+    await db_session.execute(text("DELETE FROM fuel_logs;"))
+    await db_session.execute(text("DELETE FROM maintenance_logs;"))
+    await db_session.execute(text("DELETE FROM trips;"))
     await db_session.execute(text("DELETE FROM drivers;"))
     await db_session.execute(text("DELETE FROM vehicles;"))
     await db_session.execute(text("DELETE FROM users;"))

@@ -7,6 +7,7 @@ from app.core.dependencies import require_permission
 from app.core.permissions import ModuleEnum, ActionEnum
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate, VehicleResponse
 from app.services.vehicle import VehicleService
+from app.services.finance import FinanceService
 
 router = APIRouter()
 
@@ -57,6 +58,24 @@ async def get_vehicle(
             detail=f"Vehicle with ID {id} not found."
         )
     return vehicle
+
+
+@router.get(
+    "/{id}/costs",
+    dependencies=[Depends(require_permission(ModuleEnum.expenses, ActionEnum.read))]
+)
+async def get_vehicle_operational_costs(
+    id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieve total operational costs for a vehicle (fuel + maintenance + other expenses)."""
+    vehicle = await VehicleService.get(db, id)
+    if not vehicle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Vehicle with ID {id} not found."
+        )
+    return await FinanceService.get_total_operational_cost(db, id)
 
 
 @router.put(
