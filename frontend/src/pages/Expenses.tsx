@@ -95,10 +95,10 @@ export default function Expenses() {
     },
   });
 
-  const fuelLogs: FuelLogResponse[] = fuelPage?.items || [];
-  const expenses: ExpenseResponse[] = expensesPage?.items || [];
-  const vehicles: VehicleResponse[] = vehiclesPage?.items || [];
-  const trips: TripResponse[] = tripsPage?.items || [];
+  const fuelLogs: FuelLogResponse[] = Array.isArray(fuelPage) ? fuelPage : fuelPage?.items || [];
+  const expenses: ExpenseResponse[] = Array.isArray(expensesPage) ? expensesPage : expensesPage?.items || [];
+  const vehicles: VehicleResponse[] = Array.isArray(vehiclesPage) ? vehiclesPage : vehiclesPage?.items || [];
+  const trips: TripResponse[] = Array.isArray(tripsPage) ? tripsPage : tripsPage?.items || [];
 
   // Form setups
   const {
@@ -322,7 +322,7 @@ export default function Expenses() {
       </Card>
 
       {/* Log Fuel Modal */}
-      {showFuelModal && (
+      {canWrite("expenses") && showFuelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <Card className="w-full max-w-md bg-card p-6 shadow-2xl relative">
             <button
@@ -404,7 +404,7 @@ export default function Expenses() {
       )}
 
       {/* Add Expense Modal */}
-      {showExpenseModal && (
+      {canWrite("expenses") && showExpenseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <Card className="w-full max-w-md bg-card p-6 shadow-2xl relative">
             <button

@@ -36,8 +36,8 @@ export default function Login() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "raven.k@transitops.in",
-      password: "password123",
+      email: "",
+      password: "",
       role: "fleet_manager",
     },
   });
@@ -62,10 +62,15 @@ export default function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
     try {
-      await login(data.role);
+      await login(data.email, data.password, data.role);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid credentials or login failed.");
+      const errorMessage =
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
+        err.message ||
+        "Invalid credentials or login failed.";
+      setError(errorMessage);
     }
   };
 

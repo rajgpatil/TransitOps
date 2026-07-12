@@ -57,24 +57,27 @@ export default function Trips() {
   });
 
   const { data: vehiclesPage } = useQuery({
-    queryKey: ["vehicles", { status: "available" }],
+    queryKey: ["vehicles"],
     queryFn: async () => {
-      const res = await apiClient.get("/api/vehicles", { params: { status: "available" } });
+      const res = await apiClient.get("/api/vehicles");
       return res.data;
     },
   });
 
   const { data: driversPage } = useQuery({
-    queryKey: ["drivers", { status: "available" }],
+    queryKey: ["drivers", "available"],
     queryFn: async () => {
-      const res = await apiClient.get("/api/drivers", { params: { status: "available" } });
+      const res = await apiClient.get("/api/drivers/available");
       return res.data;
     },
   });
 
-  const trips: TripResponse[] = tripsPage?.items || [];
-  const availableVehicles: VehicleResponse[] = vehiclesPage?.items || [];
-  const availableDrivers: DriverResponse[] = driversPage?.items || [];
+  const trips: TripResponse[] = Array.isArray(tripsPage) ? tripsPage : tripsPage?.items || [];
+  
+  const rawVehicles: VehicleResponse[] = Array.isArray(vehiclesPage) ? vehiclesPage : vehiclesPage?.items || [];
+  const availableVehicles = rawVehicles.filter((v) => v.status === "available");
+  
+  const availableDrivers: DriverResponse[] = Array.isArray(driversPage) ? driversPage : driversPage?.items || [];
 
   // Form hooks
   const {
@@ -207,103 +210,109 @@ export default function Trips() {
         description="Plan, validate and dispatch trips with live capacity and driver checks."
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className={
+        canWrite("trips")
+          ? "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
+          : "grid grid-cols-1 gap-6"
+      }>
         {/* Left: Create Form */}
-        <Card className="p-6 h-fit">
-          <SectionHeader className="mb-3">Trip Lifecycle</SectionHeader>
-          <LifecycleStepper current={trips.some(t => t.status === "dispatched") ? "dispatched" : "draft"} />
+        {canWrite("trips") && (
+          <Card className="p-6 h-fit">
+            <SectionHeader className="mb-3">Trip Lifecycle</SectionHeader>
+            <LifecycleStepper current={trips.some(t => t.status === "dispatched") ? "dispatched" : "draft"} />
 
-          <h2 className="mt-8 font-display text-lg text-ink">Create Trip</h2>
-          {errorMsg && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-status-red/10 p-3 text-sm text-status-red">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(handleCreateTrip)} className="mt-4 space-y-4">
-            <FormField label="Source" error={errors.source?.message}>
-              <TextInput placeholder="Gandhinagar Depot" {...register("source")} />
-            </FormField>
-            <FormField label="Destination" error={errors.destination?.message}>
-              <TextInput placeholder="Ahmedabad Hub" {...register("destination")} />
-            </FormField>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Vehicle (Available Only)" error={errors.vehicle_id?.message}>
-                <Select {...register("vehicle_id")}>
-                  <option value="">Select vehicle</option>
-                  {availableVehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} ({v.registration_number}) · {v.max_load_capacity} kg cap
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-
-              <FormField label="Driver (Available Only)" error={errors.driver_id?.message}>
-                <Select {...register("driver_id")}>
-                  <option value="">Select driver</option>
-                  {availableDrivers.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} (DL: {d.license_number}) · Score: {d.safety_score}%
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Cargo Weight (kg)" error={errors.cargo_weight?.message}>
-                <TextInput type="number" {...register("cargo_weight")} />
-              </FormField>
-              <FormField label="Planned Distance (km)" error={errors.planned_distance?.message}>
-                <TextInput type="number" {...register("planned_distance")} />
-              </FormField>
-            </div>
-
-            <FormField label="Est. Revenue (₹) - Optional" error={errors.revenue?.message}>
-              <TextInput type="number" {...register("revenue")} />
-            </FormField>
-
-            {isOverCapacity && selectedVehicle && (
-              <div className="mt-5 rounded-xl border border-status-red/30 bg-status-red/5 p-4 text-sm">
-                <div className="flex items-start gap-2.5">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-red" />
-                  <div className="space-y-1">
-                    <div className="text-foreground">
-                      <span className="font-medium">Vehicle capacity:</span>{" "}
-                      {selectedVehicle.max_load_capacity} kg
-                    </div>
-                    <div className="text-foreground">
-                      <span className="font-medium">Cargo weight:</span> {typedCargoWeight} kg
-                    </div>
-                    <div className="font-medium text-status-red">
-                      Capacity exceeded by {capacityExcess} kg — dispatch blocked
-                    </div>
-                  </div>
-                </div>
+            <h2 className="mt-8 font-display text-lg text-ink">Create Trip</h2>
+            {errorMsg && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-status-red/10 p-3 text-sm text-status-red">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{errorMsg}</span>
               </div>
             )}
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                disabled={isSubmitting || isOverCapacity || !canWrite("trips")}
-                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed cursor-pointer"
-              >
-                Create Draft Trip
-              </button>
-              <button
-                type="button"
-                onClick={() => reset()}
-                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-accent cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </Card>
+            <form onSubmit={handleSubmit(handleCreateTrip)} className="mt-4 space-y-4">
+              <FormField label="Source" error={errors.source?.message}>
+                <TextInput placeholder="Gandhinagar Depot" {...register("source")} />
+              </FormField>
+              <FormField label="Destination" error={errors.destination?.message}>
+                <TextInput placeholder="Ahmedabad Hub" {...register("destination")} />
+              </FormField>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Vehicle (Available Only)" error={errors.vehicle_id?.message}>
+                  <Select {...register("vehicle_id")}>
+                    <option value="">Select vehicle</option>
+                    {availableVehicles.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} ({v.registration_number}) · {v.max_load_capacity} kg cap
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Driver (Available Only)" error={errors.driver_id?.message}>
+                  <Select {...register("driver_id")}>
+                    <option value="">Select driver</option>
+                    {availableDrivers.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} (DL: {d.license_number}) · Score: {d.safety_score}%
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Cargo Weight (kg)" error={errors.cargo_weight?.message}>
+                  <TextInput type="number" {...register("cargo_weight")} />
+                </FormField>
+                <FormField label="Planned Distance (km)" error={errors.planned_distance?.message}>
+                  <TextInput type="number" {...register("planned_distance")} />
+                </FormField>
+              </div>
+
+              <FormField label="Est. Revenue (₹) - Optional" error={errors.revenue?.message}>
+                <TextInput type="number" {...register("revenue")} />
+              </FormField>
+
+              {isOverCapacity && selectedVehicle && (
+                <div className="mt-5 rounded-xl border border-status-red/30 bg-status-red/5 p-4 text-sm">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-red" />
+                    <div className="space-y-1">
+                      <div className="text-foreground">
+                        <span className="font-medium">Vehicle capacity:</span>{" "}
+                        {selectedVehicle.max_load_capacity} kg
+                      </div>
+                      <div className="text-foreground">
+                        <span className="font-medium">Cargo weight:</span> {typedCargoWeight} kg
+                      </div>
+                      <div className="font-medium text-status-red">
+                        Capacity exceeded by {capacityExcess} kg — dispatch blocked
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isOverCapacity || !canWrite("trips")}
+                  className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed cursor-pointer"
+                >
+                  Create Draft Trip
+                </button>
+                <button
+                  type="button"
+                  onClick={() => reset()}
+                  className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-accent cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </Card>
+        )}
 
         {/* Right: Live Board */}
         <div>

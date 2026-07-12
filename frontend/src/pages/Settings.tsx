@@ -13,13 +13,13 @@ interface MatrixRow {
 }
 
 const matrix: MatrixRow[] = [
-  { role: "Fleet Manager", cells: ["check", "check", "check", "check", "check"] },
-  { role: "Dispatcher (Driver)", cells: ["view", "dash", "check", "dash", "dash"] },
-  { role: "Safety Officer", cells: ["dash", "check", "view", "dash", "dash"] },
-  { role: "Financial Analyst", cells: ["view", "dash", "dash", "check", "check"] },
+  { role: "Fleet Manager", cells: ["check", "check", "check", "check", "check", "check"] },
+  { role: "Dispatcher (Driver)", cells: ["view", "view", "check", "dash", "check", "dash"] },
+  { role: "Safety Officer", cells: ["view", "check", "view", "view", "view", "dash"] },
+  { role: "Financial Analyst", cells: ["view", "view", "view", "view", "check", "view"] },
 ];
 
-const cols = ["Fleet", "Drivers", "Trips", "Fuel/Exp.", "Analytics"];
+const cols = ["Fleet", "Drivers", "Trips", "Maintenance", "Fuel/Exp.", "Analytics"];
 
 function CellIcon({ v }: { v: Cell }) {
   if (v === "check") return <Check className="h-4 w-4 text-status-green" />;
@@ -28,7 +28,7 @@ function CellIcon({ v }: { v: Cell }) {
 }
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, canWrite } = useAuth();
   const [depotName, setDepotName] = useState("Gandhinagar Depot GJ4");
   const [currency, setCurrency] = useState("INR");
   const [distanceUnit, setDistanceUnit] = useState("Kilometers");
@@ -73,12 +73,14 @@ export default function Settings() {
                 <option value="Miles">Miles</option>
               </Select>
             </FormField>
-            <button
-              type="submit"
-              className="mt-6 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 cursor-pointer transition"
-            >
-              Save changes
-            </button>
+            {canWrite("fleet") && (
+              <button
+                type="submit"
+                className="mt-6 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 cursor-pointer transition"
+              >
+                Save changes
+              </button>
+            )}
           </form>
         </Card>
 

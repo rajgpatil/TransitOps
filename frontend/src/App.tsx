@@ -33,9 +33,9 @@ function ProtectedLayout() {
     );
   }
 
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <AppShell>
@@ -48,13 +48,13 @@ function RouteGuard({
   module,
   children,
 }: {
-  module: "fleet" | "drivers" | "trips" | "expenses" | "analytics";
+  module: "fleet" | "drivers" | "trips" | "expenses" | "analytics" | "maintenance";
   children: React.ReactElement;
 }) {
-  // const { canAccess } = useAuth();
-  // if (!canAccess(module)) {
-  //   return <Navigate to="/dashboard" replace />;
-  // }
+  const { canAccess } = useAuth();
+  if (!canAccess(module)) {
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 }
 
@@ -98,7 +98,7 @@ export default function App() {
               <Route
                 path="/maintenance"
                 element={
-                  <RouteGuard module="fleet">
+                  <RouteGuard module="maintenance">
                     <Maintenance />
                   </RouteGuard>
                 }

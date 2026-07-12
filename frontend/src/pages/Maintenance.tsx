@@ -76,8 +76,8 @@ export default function Maintenance() {
     },
   });
 
-  const logs: MaintenanceLogResponse[] = logsPage?.items || [];
-  const allVehicles: VehicleResponse[] = vehiclesPage?.items || [];
+  const logs: MaintenanceLogResponse[] = Array.isArray(logsPage) ? logsPage : logsPage?.items || [];
+  const allVehicles: VehicleResponse[] = Array.isArray(vehiclesPage) ? vehiclesPage : vehiclesPage?.items || [];
   // Filter out retired vehicles for dropdown
   const activeVehicles = allVehicles.filter(v => v.status !== "retired");
 
@@ -160,79 +160,85 @@ export default function Maintenance() {
         description="Every wrench turn logged — with the right vehicle taken off dispatch automatically."
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div className={
+        canWrite("maintenance")
+          ? "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+          : "grid grid-cols-1 gap-6"
+      }>
         {/* Left: Log service record */}
-        <Card className="p-6 h-fit">
-          <h2 className="font-display text-lg text-ink">Log Service Record</h2>
-          {errorMsg && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-status-red/10 p-3 text-sm text-status-red">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
+        {canWrite("maintenance") && (
+          <Card className="p-6 h-fit">
+            <h2 className="font-display text-lg text-ink">Log Service Record</h2>
+            {errorMsg && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-status-red/10 p-3 text-sm text-status-red">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
-            <FormField label="Vehicle" error={errors.vehicle_id?.message}>
-              <Select {...register("vehicle_id")}>
-                <option value="">Select vehicle</option>
-                {activeVehicles.map(v => (
-                  <option key={v.id} value={v.id}>
-                    {v.name} ({v.registration_number}) · {v.status}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Service Type" error={errors.maintenance_type?.message}>
-              <Select {...register("maintenance_type")}>
-                {serviceTypesList.map(s => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Description" error={errors.description?.message}>
-              <TextInput placeholder=" radiator leak repair or oil swap..." {...register("description")} />
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Est. Cost (₹)" error={errors.cost?.message}>
-                <TextInput type="number" {...register("cost")} />
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+              <FormField label="Vehicle" error={errors.vehicle_id?.message}>
+                <Select {...register("vehicle_id")}>
+                  <option value="">Select vehicle</option>
+                  {activeVehicles.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({v.registration_number}) · {v.status}
+                    </option>
+                  ))}
+                </Select>
               </FormField>
-              <FormField label="Date" error={errors.started_at?.message}>
-                <TextInput type="date" {...register("started_at")} />
+
+              <FormField label="Service Type" error={errors.maintenance_type?.message}>
+                <Select {...register("maintenance_type")}>
+                  {serviceTypesList.map(s => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </Select>
               </FormField>
-            </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || !canWrite("fleet")}
-              className="mt-6 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed cursor-pointer"
-            >
-              {isSubmitting ? "Saving..." : "Save Record"}
-            </button>
-          </form>
+              <FormField label="Description" error={errors.description?.message}>
+                <TextInput placeholder=" radiator leak repair or oil swap..." {...register("description")} />
+              </FormField>
 
-          {/* Stepper info */}
-          <div className="mt-6 space-y-3 rounded-xl border border-border bg-paper p-4 text-xs">
-            <div className="flex items-center gap-2">
-              <StatusBadge variant="available" />
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-muted-foreground">creating active record</span>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <StatusBadge variant="in_shop" />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Est. Cost (₹)" error={errors.cost?.message}>
+                  <TextInput type="number" {...register("cost")} />
+                </FormField>
+                <FormField label="Date" error={errors.started_at?.message}>
+                  <TextInput type="date" {...register("started_at")} />
+                </FormField>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || !canWrite("maintenance")}
+                className="mt-6 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSubmitting ? "Saving..." : "Save Record"}
+              </button>
+            </form>
+
+            {/* Stepper info */}
+            <div className="mt-6 space-y-3 rounded-xl border border-border bg-paper p-4 text-xs">
+              <div className="flex items-center gap-2">
+                <StatusBadge variant="available" />
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">creating active record</span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <StatusBadge variant="in_shop" />
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge variant="in_shop" />
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">closing record (not retired)</span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <StatusBadge variant="available" />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge variant="in_shop" />
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-muted-foreground">closing record (not retired)</span>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <StatusBadge variant="available" />
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Right: Service Log */}
         <Card className="p-5">
@@ -253,7 +259,7 @@ export default function Maintenance() {
                     <th className="pb-3 pr-4">Service</th>
                     <th className="pb-3 pr-4">Cost</th>
                     <th className="pb-3 pr-4">Status</th>
-                    {canWrite("fleet") && <th className="pb-3 text-right">Action</th>}
+                    {canWrite("maintenance") && <th className="pb-3 text-right">Action</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -274,7 +280,7 @@ export default function Maintenance() {
                       <td className="py-3 pr-4">
                         <StatusBadge variant={l.status} />
                       </td>
-                      {canWrite("fleet") && (
+                      {canWrite("maintenance") && (
                         <td className="py-3 text-right">
                           {l.status === "active" ? (
                             <button

@@ -19,7 +19,7 @@ const navItems = [
   { to: "/fleet", label: "Fleet", icon: Truck, module: "fleet" },
   { to: "/drivers", label: "Drivers", icon: Users, module: "drivers" },
   { to: "/trips", label: "Trips", icon: RouteIcon, module: "trips" },
-  { to: "/maintenance", label: "Maintenance", icon: Wrench, module: "fleet" }, // Maintenance checks fleet access
+  { to: "/maintenance", label: "Maintenance", icon: Wrench, module: "maintenance" },
   { to: "/expenses", label: "Fuel & Expenses", icon: Fuel, module: "expenses" },
   { to: "/analytics", label: "Analytics", icon: BarChart3, module: "analytics" },
   { to: "/settings", label: "Settings", icon: Settings, module: null },
@@ -48,9 +48,9 @@ function Sidebar() {
       <nav className="flex-1 space-y-0.5 p-3">
         {navItems.map(item => {
           // If RBAC blocks access, don't show the link (except for settings and dashboard)
-          // if (item.module && !canAccess(item.module as any)) {
-          //   return null;
-          // }
+          if (item.module && !canAccess(item.module as any)) {
+            return null;
+          }
           const Icon = item.icon;
           const active = location.pathname.startsWith(item.to);
           return (
@@ -155,9 +155,9 @@ function MobileNav() {
       </div>
       <div className="flex gap-1 overflow-x-auto px-3 pb-2">
         {navItems.map(item => {
-          // if (item.module && !canAccess(item.module as any)) {
-          //   return null;
-          // }
+          if (item.module && !canAccess(item.module as any)) {
+            return null;
+          }
           const active = location.pathname.startsWith(item.to);
           return (
             <Link

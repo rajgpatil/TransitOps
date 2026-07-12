@@ -17,7 +17,8 @@ const vehicleFormSchema = z.object({
   registration_number: z
     .string()
     .min(1, "Registration number is required")
-    .regex(/^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/, "Invalid format (e.g. GJ01AB4521)"),
+    .max(20, "Registration number must be 20 characters or less")
+    .regex(/^[A-Z0-9\-]+$/, "Invalid format (use uppercase letters, digits, and hyphens)"),
   name: z.string().min(2, "Name/Model is required"),
   type: z.enum(["truck", "van", "bus", "sedan", "pickup", "other"] as const),
   max_load_capacity: z.coerce.number().positive("Capacity must be positive"),
@@ -43,14 +44,24 @@ export default function Fleet() {
 
   // Query vehicles registry
   const { data: pageData, isLoading } = useQuery({
-    queryKey: ["vehicles", filters],
+    queryKey: ["vehicles"],
     queryFn: async () => {
-      const res = await apiClient.get("/api/vehicles", { params: filters });
+      const res = await apiClient.get("/api/vehicles");
       return res.data;
     },
   });
 
-  const vehicles: VehicleResponse[] = pageData?.items || [];
+  const rawVehicles: VehicleResponse[] = Array.isArray(pageData) ? pageData : pageData?.items || [];
+
+  const vehicles = rawVehicles.filter((v) => {
+    const matchType = filters.type === "All" || v.type === filters.type;
+    const matchStatus = filters.status === "All" || v.status === filters.status;
+    const matchSearch =
+      !filters.search ||
+      v.registration_number.toLowerCase().includes(filters.search.toLowerCase()) ||
+      v.name.toLowerCase().includes(filters.search.toLowerCase());
+    return matchType && matchStatus && matchSearch;
+  });
 
   // Mutation to create a vehicle
   const createVehicleMutation = useMutation({
@@ -206,7 +217,7 @@ export default function Fleet() {
       </Card>
 
       {/* Add Vehicle Modal */}
-      {showModal && (
+      {canWrite("fleet") && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <Card className="w-full max-w-lg bg-card p-6 shadow-2xl relative">
             <button

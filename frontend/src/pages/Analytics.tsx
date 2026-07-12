@@ -16,7 +16,7 @@ export default function Analytics() {
     },
   });
 
-  // Query Charts
+  // Query Charts (Operating Cost Trend)
   const { data: charts, isLoading: isChartsLoading } = useQuery({
     queryKey: ["dashboard-charts"],
     queryFn: async () => {
@@ -25,23 +25,35 @@ export default function Analytics() {
     },
   });
 
-  const revenueData = charts?.revenue || [
-    { label: "Jan", value: 42 },
-    { label: "Feb", value: 55 },
-    { label: "Mar", value: 38 },
-    { label: "Apr", value: 71 },
-    { label: "May", value: 62 },
-    { label: "Jun", value: 84 },
-    { label: "Jul", value: 76 },
-  ];
+  // Query Operational Cost Report (to find costliest vehicles)
+  const { data: operationalCosts, isLoading: isCostsLoading } = useQuery({
+    queryKey: ["reports-operational-cost"],
+    queryFn: async () => {
+      const res = await apiClient.get("/api/reports/operational-cost");
+      return res.data;
+    },
+  });
 
-  // Map values to thousands for charting clean display if they are full numbers
-  const formattedRevenue = revenueData.map((d: any) => ({
-    label: d.label,
-    value: d.value > 1000 ? Math.round(d.value / 1000) : d.value,
-  }));
+  const costTrendData = charts?.cost_trend || [];
+  const formattedCostTrend = costTrendData.map((d: any) => {
+    const [year, monthStr] = d.month.split("-");
+    const dateObj = new Date(Number(year), Number(monthStr) - 1, 1);
+    const label = dateObj.toLocaleDateString("en-US", { month: "short" });
+    const totalCost = Number(d.fuel_cost) + Number(d.maintenance_cost) + Number(d.other_expense_cost);
+    return {
+      label,
+      value: totalCost > 1000 ? Math.round(totalCost / 1000) : totalCost,
+    };
+  });
 
-  const costliestVehicles = charts?.costliestVehicles || [];
+  const rawCosts: any[] = Array.isArray(operationalCosts) ? operationalCosts : [];
+  const costliestVehicles = [...rawCosts]
+    .sort((a, b) => Number(b.total_cost) - Number(a.total_cost))
+    .slice(0, 5)
+    .map((item) => ({
+      label: item.registration_number,
+      value: Number(item.total_cost),
+    }));
 
   return (
     <>
@@ -58,14 +70,14 @@ export default function Analytics() {
         </div>
       ) : (
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Fuel Efficiency" value={kpis?.fuelEfficiency || "8.4 km/L"} accent="blue" />
-          <StatCard label="Fleet Utilization" value={kpis?.utilization || "81%"} accent="green" />
+          <StatCard label="Fuel Efficiency" value={kpis?.fuel_efficiency !== undefined ? `${Number(kpis.fuel_efficiency).toFixed(1)} km/L` : "0.0 km/L"} accent="blue" />
+          <StatCard label="Fleet Utilization" value={kpis?.fleet_utilization_pct !== undefined ? `${Number(kpis.fleet_utilization_pct).toFixed(1)}%` : "0.0%"} accent="green" />
           <StatCard
             label="Operational Cost"
-            value={kpis?.operationalCost ? `₹ ${kpis.operationalCost.toLocaleString()}` : "₹ 34,070"}
+            value={kpis?.operational_cost ? `₹ ${Number(kpis.operational_cost).toLocaleString("en-IN")}` : "₹ 0"}
             accent="amber"
           />
-          <StatCard label="Vehicle ROI" value={kpis?.vehicleRoi || "14.2%"} accent="primary" />
+          <StatCard label="Vehicle ROI" value={kpis?.roi !== undefined && kpis.roi !== "N/A" ? `${Number(kpis.roi).toFixed(1)}%` : "N/A"} accent="primary" />
         </div>
       )}
 
@@ -75,17 +87,19 @@ export default function Analytics() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Card className="p-5">
-          <h2 className="mb-6 font-display text-lg text-ink">Monthly Revenue (₹ '000)</h2>
+          <h2 className="mb-6 font-display text-lg text-ink">Monthly Operating Cost (₹ '000)</h2>
           {isChartsLoading ? (
             <div className="h-[220px] bg-muted animate-pulse rounded" />
+          ) : formattedCostTrend.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No monthly operating cost logged.</p>
           ) : (
-            <BarChart data={formattedRevenue} height={220} />
+            <BarChart data={formattedCostTrend} height={220} />
           )}
         </Card>
 
         <Card className="p-5">
           <h2 className="mb-4 font-display text-lg text-ink">Top Costliest Vehicles (₹)</h2>
-          {isChartsLoading ? (
+          {isCostsLoading || isChartsLoading ? (
             <div className="space-y-2 animate-pulse">
               <div className="h-6 bg-muted rounded w-full" />
               <div className="h-6 bg-muted rounded w-full" />

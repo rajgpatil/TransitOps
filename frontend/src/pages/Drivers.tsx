@@ -18,7 +18,11 @@ const driverFormSchema = z.object({
   license_number: z.string().min(5, "License number must be at least 5 characters"),
   license_category: z.enum(["A", "B", "C", "D", "E", "CE", "DE"] as const),
   license_expiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD date format"),
-  contact_number: z.string().regex(/^\d{10}$/, "Must be a valid 10-digit number"),
+  contact_number: z
+    .string()
+    .min(7, "Contact number must be at least 7 characters")
+    .max(20, "Contact number must be 20 characters or less")
+    .regex(/^[+]?[0-9\s\-()]+$/, "Invalid phone format (e.g. +91 99999 99999 or 09999999999)"),
   safety_score: z.coerce.number().min(0, "Cannot be less than 0").max(100, "Cannot exceed 100"),
   status: z.enum(["available", "on_trip", "off_duty", "suspended"] as const),
 });
@@ -38,14 +42,26 @@ export default function Drivers() {
 
   // Query drivers registry
   const { data: pageData, isLoading } = useQuery({
-    queryKey: ["drivers", filters],
+    queryKey: ["drivers", filters.status],
     queryFn: async () => {
-      const res = await apiClient.get("/api/drivers", { params: filters });
+      const params: any = {};
+      if (filters.status !== "All") {
+        params.status_filter = filters.status;
+      }
+      const res = await apiClient.get("/api/drivers", { params });
       return res.data;
     },
   });
 
-  const drivers: DriverResponse[] = pageData?.items || [];
+  const rawDrivers: DriverResponse[] = Array.isArray(pageData) ? pageData : pageData?.items || [];
+
+  const drivers = rawDrivers.filter((d) => {
+    const matchSearch =
+      !filters.search ||
+      d.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      d.license_number.toLowerCase().includes(filters.search.toLowerCase());
+    return matchSearch;
+  });
 
   // Mutation to create driver
   const createDriverMutation = useMutation({
@@ -60,7 +76,7 @@ export default function Drivers() {
       reset();
     },
     onError: (err: any) => {
-      setErrorMsg(err.response?.data?.message || "Failed to add driver. Ensure license number is unique.");
+      setErrorMsg(err.response?.data?.message || err.response?.data?.detail || "Failed to add driver. Ensure license number is unique.");
     },
   });
 
@@ -204,7 +220,7 @@ export default function Drivers() {
       </div>
 
       {/* Add Driver Modal */}
-      {showModal && (
+      {canWrite("drivers") && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <Card className="w-full max-w-lg bg-card p-6 shadow-2xl relative">
             <button

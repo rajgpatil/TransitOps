@@ -21,7 +21,11 @@ export default function Dashboard() {
   const { data: kpis, isLoading: isKpisLoading } = useQuery({
     queryKey: ["dashboard-kpis", filters],
     queryFn: async () => {
-      const res = await apiClient.get("/api/dashboard/kpis", { params: filters });
+      const params: any = {};
+      if (filters.type !== "All") params.vehicle_type = filters.type;
+      if (filters.status !== "All") params.vehicle_status = filters.status;
+      if (filters.region !== "All") params.region = filters.region;
+      const res = await apiClient.get("/api/dashboard/kpis", { params });
       return res.data;
     },
   });
@@ -39,12 +43,22 @@ export default function Dashboard() {
   const { data: tripsPage, isLoading: isTripsLoading } = useQuery({
     queryKey: ["recent-trips"],
     queryFn: async () => {
-      const res = await apiClient.get("/api/trips", { params: { page: 1, page_size: 4 } });
+      const res = await apiClient.get("/api/trips", { params: { skip: 0, limit: 4 } });
       return res.data;
     },
   });
 
-  const recentTrips = tripsPage?.items || [];
+  const recentTrips = (Array.isArray(tripsPage) ? tripsPage : tripsPage?.items || []).slice(0, 4);
+
+  const activeVehicles = kpis?.active_vehicles_count ?? 0;
+  const availableVehicles = kpis?.available_vehicles_count ?? 0;
+  const inShopVehicles = kpis?.vehicles_in_shop_count ?? 0;
+  const activeTrips = kpis?.active_trips_count ?? 0;
+  const pendingTrips = kpis?.pending_trips_count ?? 0;
+  const driversOnDuty = kpis?.drivers_on_duty_count ?? 0;
+  const utilization = kpis?.fleet_utilization_pct !== undefined ? `${Number(kpis.fleet_utilization_pct).toFixed(1)}%` : "0.0%";
+  const retiredVehicles = 0;
+  const totalVehicles = availableVehicles + activeTrips + inShopVehicles;
 
   return (
     <>
@@ -99,13 +113,13 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-          <StatCard label="Active Vehicles" value={kpis?.activeVehicles ?? 0} accent="blue" />
-          <StatCard label="Available" value={kpis?.availableVehicles ?? 0} accent="green" />
-          <StatCard label="In Maintenance" value={kpis?.inShopVehicles ?? 0} accent="amber" />
-          <StatCard label="Active Trips" value={kpis?.activeTrips ?? 0} accent="blue" />
-          <StatCard label="Pending Trips" value={kpis?.pendingTrips ?? 0} accent="slate" />
-          <StatCard label="Drivers On Duty" value={kpis?.driversOnDuty ?? 0} accent="primary" />
-          <StatCard label="Fleet Utilization" value={kpis?.utilization ?? "0%"} accent="green" />
+          <StatCard label="Active Vehicles" value={activeVehicles} accent="blue" />
+          <StatCard label="Available" value={availableVehicles} accent="green" />
+          <StatCard label="In Maintenance" value={inShopVehicles} accent="amber" />
+          <StatCard label="Active Trips" value={activeTrips} accent="blue" />
+          <StatCard label="Pending Trips" value={pendingTrips} accent="slate" />
+          <StatCard label="Drivers On Duty" value={driversOnDuty} accent="primary" />
+          <StatCard label="Fleet Utilization" value={utilization} accent="green" />
         </div>
       )}
 
@@ -174,10 +188,10 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-1">
-              <HorizontalBar label="Available" value={kpis?.availableVehicles ?? 0} max={kpis?.totalVehicles ?? 10} color="green" />
-              <HorizontalBar label="On Trip" value={kpis?.activeTrips ?? 0} max={kpis?.totalVehicles ?? 10} color="blue" />
-              <HorizontalBar label="In Shop" value={kpis?.inShopVehicles ?? 0} max={kpis?.totalVehicles ?? 10} color="amber" />
-              <HorizontalBar label="Retired" value={kpis?.retiredVehicles ?? 0} max={kpis?.totalVehicles ?? 10} color="red" />
+              <HorizontalBar label="Available" value={availableVehicles} max={totalVehicles ?? 10} color="green" />
+              <HorizontalBar label="On Trip" value={activeTrips} max={totalVehicles ?? 10} color="blue" />
+              <HorizontalBar label="In Shop" value={inShopVehicles} max={totalVehicles ?? 10} color="amber" />
+              <HorizontalBar label="Retired" value={retiredVehicles} max={totalVehicles ?? 10} color="red" />
             </div>
           )}
         </Card>
