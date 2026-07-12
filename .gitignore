@@ -42,3 +42,9 @@ backend/htmlcov/
 .pytest_cache/
 **/__pycache__/
 
+docs/*
+schemas/*
+theme/*
+schemas.zip
+frontend/node_modules/*
+frontend/dist/*
