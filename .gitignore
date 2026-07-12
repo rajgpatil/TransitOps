@@ -33,3 +33,12 @@ backend/.env
 # Operating System Metadata
 .DS_Store
 Thumbs.db
+
+# Coverage / Testing outputs
+.coverage
+htmlcov/
+backend/.coverage
+backend/htmlcov/
+.pytest_cache/
+**/__pycache__/
+
