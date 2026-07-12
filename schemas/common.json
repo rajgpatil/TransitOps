@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/common.json",
+  "title": "TransitOps Common Definitions",
+  "description": "Shared definitions: audit fields, pagination, error envelope, and reusable types.",
+  "$defs": {
+    "AuditFields": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Auto-generated primary key.",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of record creation (ISO 8601)."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last update (ISO 8601)."
+        }
+      },
+      "required": ["id", "created_at", "updated_at"]
+    },
+    "PaginationRequest": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Page number (1-indexed)."
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20,
+          "description": "Number of items per page."
+        },
+        "sort_by": {
+          "type": "string",
+          "description": "Field name to sort by."
+        },
+        "sort_order": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "default": "asc"
+        }
+      }
+    },
+    "PaginatedResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Array of result items for the current page."
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of items across all pages."
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total_pages": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["items", "total", "page", "page_size", "total_pages"]
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Machine-readable error code (e.g., 'VALIDATION_ERROR', 'NOT_FOUND', 'CONFLICT')."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable error message."
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": { "type": "string" },
+                  "message": { "type": "string" },
+                  "code": { "type": "string" }
+                },
+                "required": ["field", "message"]
+              },
+              "description": "Field-level validation errors."
+            }
+          },
+          "required": ["code", "message"]
+        }
+      },
+      "required": ["error"]
+    },
+    "SuccessEnvelope": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Response payload."
+        },
+        "message": {
+          "type": "string",
+          "description": "Optional success message."
+        }
+      },
+      "required": ["data"]
+    }
+  }
+}

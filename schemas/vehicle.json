@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/vehicle.json",
+  "title": "TransitOps Vehicle Schemas",
+  "description": "Vehicle entity schemas with Create, Update, and Response variants.",
+  "$defs": {
+    "VehicleStatusEnum": {
+      "type": "string",
+      "enum": ["available", "on_trip", "in_shop", "retired"],
+      "description": "Current operational status of the vehicle."
+    },
+    "VehicleTypeEnum": {
+      "type": "string",
+      "enum": ["truck", "van", "bus", "sedan", "pickup", "other"],
+      "description": "Vehicle type classification."
+    },
+    "VehicleCreate": {
+      "type": "object",
+      "properties": {
+        "registration_number": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "pattern": "^[A-Z0-9\\-]+$",
+          "description": "Unique vehicle registration/plate number. Uniqueness enforced at DB level."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Vehicle name or model."
+        },
+        "type": {
+          "$ref": "#/$defs/VehicleTypeEnum"
+        },
+        "max_load_capacity": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000,
+          "description": "Maximum cargo load in kilograms."
+        },
+        "odometer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Current odometer reading in kilometers."
+        },
+        "acquisition_cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Purchase price of the vehicle."
+        },
+        "region": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Operating region (used for dashboard filtering)."
+        },
+        "status": {
+          "$ref": "#/$defs/VehicleStatusEnum",
+          "default": "available"
+        }
+      },
+      "required": ["registration_number", "name", "type", "max_load_capacity", "odometer", "acquisition_cost"],
+      "additionalProperties": false
+    },
+    "VehicleUpdate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "type": {
+          "$ref": "#/$defs/VehicleTypeEnum"
+        },
+        "max_load_capacity": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000
+        },
+        "odometer": {
+          "type": "number",
+          "minimum": 0
+        },
+        "acquisition_cost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "region": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "status": {
+          "$ref": "#/$defs/VehicleStatusEnum"
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false,
+      "description": "Partial update — registration_number is immutable after creation."
+    },
+    "VehicleResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "registration_number": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/VehicleTypeEnum"
+        },
+        "max_load_capacity": {
+          "type": "number"
+        },
+        "odometer": {
+          "type": "number"
+        },
+        "acquisition_cost": {
+          "type": "number"
+        },
+        "region": {
+          "type": ["string", "null"]
+        },
+        "status": {
+          "$ref": "#/$defs/VehicleStatusEnum"
+        },
+        "active_maintenance_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of currently active maintenance records."
+        }
+      },
+      "required": ["id", "registration_number", "name", "type", "max_load_capacity", "odometer", "acquisition_cost", "status", "created_at", "updated_at"]
+    }
+  }
+}

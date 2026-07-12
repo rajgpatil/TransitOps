@@ -56,7 +56,7 @@ PERMISSION_MATRIX: Dict[Tuple[ModuleEnum, ActionEnum], Set[RoleEnum]] = {
     (ModuleEnum.dashboard, ActionEnum.read): {RoleEnum.fleet_manager, RoleEnum.driver, RoleEnum.safety_officer, RoleEnum.financial_analyst},
 
     # Reports & Analytics
-    (ModuleEnum.reports, ActionEnum.read): {RoleEnum.fleet_manager, RoleEnum.safety_officer, RoleEnum.financial_analyst},
+    (ModuleEnum.reports, ActionEnum.read): {RoleEnum.fleet_manager, RoleEnum.financial_analyst},
 }
 
 

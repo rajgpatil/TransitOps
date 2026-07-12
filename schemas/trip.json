@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/trip.json",
+  "title": "TransitOps Trip Schemas",
+  "description": "Trip entity schemas with Create, Update, Response, and action (Dispatch/Complete/Cancel) variants.",
+  "$defs": {
+    "TripStatusEnum": {
+      "type": "string",
+      "enum": ["draft", "dispatched", "completed", "cancelled"],
+      "description": "Trip lifecycle status. Transitions: Draft → Dispatched → Completed | Cancelled. Draft → Cancelled is also allowed."
+    },
+    "TripCreate": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Trip origin location."
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Trip destination location."
+        },
+        "vehicle_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "FK to Vehicle. Must have status = available."
+        },
+        "driver_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "FK to Driver. Must have status = available, valid license, not suspended."
+        },
+        "cargo_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000,
+          "description": "Cargo weight in kg. Must be ≤ vehicle.max_load_capacity."
+        },
+        "planned_distance": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Planned trip distance in km."
+        },
+        "revenue": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Expected revenue for this trip (optional; used in ROI calculation)."
+        }
+      },
+      "required": ["source", "destination", "vehicle_id", "driver_id", "cargo_weight", "planned_distance"],
+      "additionalProperties": false
+    },
+    "TripUpdate": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "vehicle_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "driver_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cargo_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "planned_distance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "revenue": {
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false,
+      "description": "Partial update — only allowed when trip status is 'draft'."
+    },
+    "TripDispatchRequest": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "description": "No body required. Server validates vehicle/driver availability and cargo weight at dispatch time."
+    },
+    "TripCompleteRequest": {
+      "type": "object",
+      "properties": {
+        "actual_distance": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Actual distance traveled in km."
+        },
+        "fuel_consumed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Fuel consumed in liters."
+        },
+        "final_odometer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Vehicle odometer reading at trip end."
+        },
+        "revenue": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Actual revenue earned (can override estimate)."
+        }
+      },
+      "required": ["actual_distance", "fuel_consumed", "final_odometer"],
+      "additionalProperties": false
+    },
+    "TripCancelRequest": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Optional cancellation reason."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TripResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "source": { "type": "string" },
+        "destination": { "type": "string" },
+        "vehicle_id": { "type": "integer" },
+        "driver_id": { "type": "integer" },
+        "cargo_weight": { "type": "number" },
+        "planned_distance": { "type": "number" },
+        "actual_distance": { "type": ["number", "null"] },
+        "fuel_consumed": { "type": ["number", "null"] },
+        "final_odometer": { "type": ["number", "null"] },
+        "revenue": { "type": ["number", "null"] },
+        "status": { "$ref": "#/$defs/TripStatusEnum" },
+        "dispatched_at": { "type": ["string", "null"], "format": "date-time" },
+        "completed_at": { "type": ["string", "null"], "format": "date-time" },
+        "cancelled_at": { "type": ["string", "null"], "format": "date-time" },
+        "cancel_reason": { "type": ["string", "null"] },
+        "vehicle": {
+          "description": "Embedded vehicle summary (optional expand).",
+          "type": "object"
+        },
+        "driver": {
+          "description": "Embedded driver summary (optional expand).",
+          "type": "object"
+        }
+      },
+      "required": ["id", "source", "destination", "vehicle_id", "driver_id", "cargo_weight", "planned_distance", "status", "created_at", "updated_at"]
+    }
+  }
+}
