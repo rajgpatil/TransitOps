@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/expense.json",
+  "title": "TransitOps Expense Schemas",
+  "description": "Expense entity schemas with Create, Update, and Response variants.",
+  "$defs": {
+    "ExpenseTypeEnum": {
+      "type": "string",
+      "enum": ["toll", "parking", "insurance", "registration_fee", "fine", "maintenance_related", "cleaning", "other"],
+      "description": "Category of the expense."
+    },
+    "ExpenseCreate": {
+      "type": "object",
+      "properties": {
+        "vehicle_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "FK to Vehicle."
+        },
+        "trip_id": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Optional FK to Trip."
+        },
+        "expense_type": {
+          "$ref": "#/$defs/ExpenseTypeEnum"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Description of the expense."
+        },
+        "cost": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Expense amount in currency units."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of the expense (YYYY-MM-DD)."
+        }
+      },
+      "required": ["vehicle_id", "expense_type", "cost", "date"],
+      "additionalProperties": false
+    },
+    "ExpenseUpdate": {
+      "type": "object",
+      "properties": {
+        "expense_type": {
+          "$ref": "#/$defs/ExpenseTypeEnum"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "cost": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "ExpenseResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "vehicle_id": { "type": "integer" },
+        "trip_id": { "type": ["integer", "null"] },
+        "expense_type": { "$ref": "#/$defs/ExpenseTypeEnum" },
+        "description": { "type": ["string", "null"] },
+        "cost": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "created_by": { "type": "integer", "description": "User ID who created this entry." }
+      },
+      "required": ["id", "vehicle_id", "expense_type", "cost", "date", "created_at", "updated_at"]
+    }
+  }
+}

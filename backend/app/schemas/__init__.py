@@ -48,6 +48,16 @@ from app.schemas.expense import (
     ExpenseUpdate,
     ExpenseResponse,
 )
+from app.schemas.dashboard import (
+    DashboardKPIsResponse,
+    ChartDataResponse,
+)
+from app.schemas.reports import (
+    FuelEfficiencyReportItem,
+    FleetUtilizationReportItem,
+    OperationalCostReportItem,
+    VehicleROIReportItem,
+)
 
 __all__ = [
     "RoleEnum",
@@ -86,4 +96,10 @@ __all__ = [
     "ExpenseCreate",
     "ExpenseUpdate",
     "ExpenseResponse",
+    "DashboardKPIsResponse",
+    "ChartDataResponse",
+    "FuelEfficiencyReportItem",
+    "FleetUtilizationReportItem",
+    "OperationalCostReportItem",
+    "VehicleROIReportItem",
 ]

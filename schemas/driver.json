@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/driver.json",
+  "title": "TransitOps Driver Schemas",
+  "description": "Driver entity schemas with Create, Update, and Response variants.",
+  "$defs": {
+    "DriverStatusEnum": {
+      "type": "string",
+      "enum": ["available", "on_trip", "off_duty", "suspended"],
+      "description": "Current status of the driver."
+    },
+    "LicenseCategoryEnum": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E", "CE", "DE"],
+      "description": "Driver license category."
+    },
+    "DriverCreate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "description": "Driver full name."
+        },
+        "license_number": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "description": "Unique driver license number."
+        },
+        "license_category": {
+          "$ref": "#/$defs/LicenseCategoryEnum"
+        },
+        "license_expiry": {
+          "type": "string",
+          "format": "date",
+          "description": "License expiration date (YYYY-MM-DD)."
+        },
+        "contact_number": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 20,
+          "pattern": "^[+]?[0-9\\s\\-()]+$",
+          "description": "Phone number."
+        },
+        "safety_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 100,
+          "description": "Safety rating 0–100."
+        },
+        "status": {
+          "$ref": "#/$defs/DriverStatusEnum",
+          "default": "available"
+        }
+      },
+      "required": ["name", "license_number", "license_category", "license_expiry", "contact_number"],
+      "additionalProperties": false
+    },
+    "DriverUpdate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "license_category": {
+          "$ref": "#/$defs/LicenseCategoryEnum"
+        },
+        "license_expiry": {
+          "type": "string",
+          "format": "date"
+        },
+        "contact_number": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 20,
+          "pattern": "^[+]?[0-9\\s\\-()]+$"
+        },
+        "safety_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "status": {
+          "$ref": "#/$defs/DriverStatusEnum"
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false,
+      "description": "Partial update — license_number is immutable after creation."
+    },
+    "DriverResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "name": {
+          "type": "string"
+        },
+        "license_number": {
+          "type": "string"
+        },
+        "license_category": {
+          "$ref": "#/$defs/LicenseCategoryEnum"
+        },
+        "license_expiry": {
+          "type": "string",
+          "format": "date"
+        },
+        "contact_number": {
+          "type": "string"
+        },
+        "safety_score": {
+          "type": "number"
+        },
+        "status": {
+          "$ref": "#/$defs/DriverStatusEnum"
+        },
+        "is_license_expired": {
+          "type": "boolean",
+          "description": "Computed: true if license_expiry < today."
+        },
+        "is_assignable": {
+          "type": "boolean",
+          "description": "Computed: true if available, not suspended, license not expired."
+        }
+      },
+      "required": ["id", "name", "license_number", "license_category", "license_expiry", "contact_number", "safety_score", "status", "created_at", "updated_at"]
+    }
+  }
+}

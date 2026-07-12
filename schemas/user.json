@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/user.json",
+  "title": "TransitOps User / Role Schemas",
+  "description": "User and Role entity schemas with Create, Update, and Response variants.",
+  "$defs": {
+    "RoleEnum": {
+      "type": "string",
+      "enum": ["fleet_manager", "driver", "safety_officer", "financial_analyst"],
+      "description": "User role within TransitOps."
+    },
+    "UserCreate": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 255,
+          "description": "Unique login email address."
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "description": "Plaintext password (hashed server-side via bcrypt)."
+        },
+        "full_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "description": "User's display name."
+        },
+        "role": {
+          "$ref": "#/$defs/RoleEnum"
+        }
+      },
+      "required": ["email", "password", "full_name", "role"],
+      "additionalProperties": false
+    },
+    "UserUpdate": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 255
+        },
+        "full_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "role": {
+          "$ref": "#/$defs/RoleEnum"
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Soft-disable the user account."
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false,
+      "description": "Partial update — at least one field required."
+    },
+    "UserResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/RoleEnum"
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      },
+      "required": ["id", "email", "full_name", "role", "is_active", "created_at", "updated_at"],
+      "description": "User response — password is never returned."
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["email", "password"],
+      "additionalProperties": false
+    },
+    "TokenResponse": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "description": "JWT access token."
+        },
+        "refresh_token": {
+          "type": "string",
+          "description": "JWT refresh token."
+        },
+        "token_type": {
+          "type": "string",
+          "const": "bearer"
+        },
+        "expires_in": {
+          "type": "integer",
+          "description": "Access token TTL in seconds."
+        }
+      },
+      "required": ["access_token", "refresh_token", "token_type", "expires_in"]
+    }
+  }
+}

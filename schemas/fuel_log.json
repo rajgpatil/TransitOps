@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/fuel_log.json",
+  "title": "TransitOps Fuel Log Schemas",
+  "description": "Fuel log entity schemas with Create, Update, and Response variants.",
+  "$defs": {
+    "FuelLogCreate": {
+      "type": "object",
+      "properties": {
+        "vehicle_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "FK to Vehicle."
+        },
+        "trip_id": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Optional FK to Trip. Links fuel entry to a specific trip."
+        },
+        "liters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000,
+          "description": "Amount of fuel in liters."
+        },
+        "cost": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Total fuel cost in currency units."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of fueling (YYYY-MM-DD)."
+        },
+        "odometer_at_fill": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Optional odometer reading at time of fueling."
+        }
+      },
+      "required": ["vehicle_id", "liters", "cost", "date"],
+      "additionalProperties": false
+    },
+    "FuelLogUpdate": {
+      "type": "object",
+      "properties": {
+        "liters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000
+        },
+        "cost": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "odometer_at_fill": {
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "FuelLogResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "vehicle_id": { "type": "integer" },
+        "trip_id": { "type": ["integer", "null"] },
+        "liters": { "type": "number" },
+        "cost": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "odometer_at_fill": { "type": ["number", "null"] },
+        "created_by": { "type": "integer", "description": "User ID who created this entry." }
+      },
+      "required": ["id", "vehicle_id", "liters", "cost", "date", "created_at", "updated_at"]
+    }
+  }
+}

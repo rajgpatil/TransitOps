@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transitops.io/schemas/maintenance.json",
+  "title": "TransitOps Maintenance Log Schemas",
+  "description": "Maintenance log entity schemas with Create, Update, and Response variants.",
+  "$defs": {
+    "MaintenanceStatusEnum": {
+      "type": "string",
+      "enum": ["active", "closed"],
+      "description": "Maintenance record status. Active → vehicle In Shop. Closed → vehicle Available (unless Retired)."
+    },
+    "MaintenanceTypeEnum": {
+      "type": "string",
+      "enum": ["oil_change", "tire_replacement", "brake_service", "engine_repair", "body_work", "inspection", "electrical", "transmission", "other"],
+      "description": "Type of maintenance performed."
+    },
+    "MaintenanceLogCreate": {
+      "type": "object",
+      "properties": {
+        "vehicle_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "FK to Vehicle. Creating an active record sets vehicle status to In Shop."
+        },
+        "maintenance_type": {
+          "$ref": "#/$defs/MaintenanceTypeEnum"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Description of maintenance work (e.g., 'Oil Change — 10W-40')."
+        },
+        "cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cost of the maintenance in currency units."
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When maintenance began. Defaults to now if omitted."
+        }
+      },
+      "required": ["vehicle_id", "maintenance_type", "description"],
+      "additionalProperties": false
+    },
+    "MaintenanceLogUpdate": {
+      "type": "object",
+      "properties": {
+        "maintenance_type": {
+          "$ref": "#/$defs/MaintenanceTypeEnum"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "cost": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false,
+      "description": "Partial update — only allowed while status is 'active'."
+    },
+    "MaintenanceLogCloseRequest": {
+      "type": "object",
+      "properties": {
+        "cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Final cost (can update cost at closure)."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Closing notes."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Close a maintenance record. Vehicle returns to Available unless Retired."
+    },
+    "MaintenanceLogResponse": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "common.json#/$defs/AuditFields" }
+      ],
+      "properties": {
+        "id": true,
+        "created_at": true,
+        "updated_at": true,
+        "vehicle_id": { "type": "integer" },
+        "maintenance_type": { "$ref": "#/$defs/MaintenanceTypeEnum" },
+        "description": { "type": "string" },
+        "cost": { "type": ["number", "null"] },
+        "status": { "$ref": "#/$defs/MaintenanceStatusEnum" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "closed_at": { "type": ["string", "null"], "format": "date-time" },
+        "notes": { "type": ["string", "null"] }
+      },
+      "required": ["id", "vehicle_id", "maintenance_type", "description", "status", "started_at", "created_at", "updated_at"]
+    }
+  }
+}
