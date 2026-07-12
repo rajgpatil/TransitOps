@@ -231,18 +231,3 @@ When the server is running, visit:
 | `financial_analyst` | Read-only all resources; full dashboard & reports including ROI |
 
 ---
-
-## Phase 9 — Security Hardening (Deferred)
-
-> **⚠️ Phase 9 is intentionally deferred and NOT implemented in this version.**
-
-The following items are scoped for a dedicated security hardening pass:
-
-- [ ] Rate limiting on authentication endpoints (`/api/auth/login`, `/api/auth/register`)
-- [ ] Structured audit-trail logging for state-changing actions (dispatch, cancel, maintenance close)
-- [ ] Full RBAC coverage sweep — automated matrix tests for every endpoint × role combination
-- [ ] Input sanitisation review and SQL injection hardening beyond current scope
-- [ ] Secrets management integration (e.g., AWS Secrets Manager / Vault) for production deployments
-- [ ] HTTPS / TLS termination configuration guidance
-
-These items will be addressed in a follow-up PR labelled **`phase/9-hardening`**.
